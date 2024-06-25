@@ -17,6 +17,9 @@ def scrape_page(url):
     # 查找所有符合条件的posts-item
     posts_items = soup.select('div.posts-row.ajaxpager > posts.posts-item.list.ajax-item.flex')
 
+
+
+
     # 初始化数组存储数据
     hrefs = []
     alts = []
