@@ -1,35 +1,35 @@
+import requests
 
-import tweepy
-# 替换为你的API密钥和访问令牌
-api_key = 'bidDjvDw7m4kM3PtW2FEp8a6L'
-api_secret_key = 'FsgUqkV79AvQAKUsyyQlxVYqIHzyrC1itMAbnnunsiD9vRPJSR'
-access_token = '1492064576384700421-ZfQcIeCMxwWgzH3V8C3OhLHsPLmH9W'
-access_token_secret = 'vZiDUIZIoLdJCNSBvp5OZiToBALnz0DcLg0427pbIush8'
-
-proxies = {
+#1、先查询用户的UID
+#https://x.com/i/api/graphql/-0XdHI-mrHWBQd8-oLo1aA/ProfileSpotlightsQuery?variables=%7B%22screen_name%22%3A%22paul9886%22%7D
+#https://x.com/i/api/graphql/-0XdHI-mrHWBQd8-oLo1aA/ProfileSpotlightsQuery?variables=%7B%22screen_name%22%3A%22【用户名称】%22%7D
+#参数：X-Csrf-Token：83606fc7c8e55a1ac7b253fe39775c575ba3513b58fa9fdf536f6378ddd75e91d42287b78d346975f35a5d4e049844b6f4b1b963688ce864b613f2333f12c3b5fdc21f885f6579f0392c3f40090bffbf
+#2、获取首次地址
+#https://x.com/i/api/graphql/V7H0Ap3_Hh2FyS75OCDO3Q/UserTweets?variables=%7B%22userId%22%3A%221058197676213231618%22%2C%22count%22%3A20%2C%22includePromotedContent%22%3Atrue%2C%22withQuickPromoteEligibilityTweetFields%22%3Atrue%2C%22withVoice%22%3Atrue%2C%22withV2Timeline%22%3Atrue%7D&features=%7B%22rweb_tipjar_consumption_enabled%22%3Atrue%2C%22responsive_web_graphql_exclude_directive_enabled%22%3Atrue%2C%22verified_phone_label_enabled%22%3Afalse%2C%22creator_subscriptions_tweet_preview_api_enabled%22%3Atrue%2C%22responsive_web_graphql_timeline_navigation_enabled%22%3Atrue%2C%22responsive_web_graphql_skip_user_profile_image_extensions_enabled%22%3Afalse%2C%22communities_web_enable_tweet_community_results_fetch%22%3Atrue%2C%22c9s_tweet_anatomy_moderator_badge_enabled%22%3Atrue%2C%22articles_preview_enabled%22%3Atrue%2C%22tweetypie_unmention_optimization_enabled%22%3Atrue%2C%22responsive_web_edit_tweet_api_enabled%22%3Atrue%2C%22graphql_is_translatable_rweb_tweet_is_translatable_enabled%22%3Atrue%2C%22view_counts_everywhere_api_enabled%22%3Atrue%2C%22longform_notetweets_consumption_enabled%22%3Atrue%2C%22responsive_web_twitter_article_tweet_consumption_enabled%22%3Atrue%2C%22tweet_awards_web_tipping_enabled%22%3Afalse%2C%22creator_subscriptions_quote_tweet_preview_enabled%22%3Afalse%2C%22freedom_of_speech_not_reach_fetch_enabled%22%3Atrue%2C%22standardized_nudges_misinfo%22%3Atrue%2C%22tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled%22%3Atrue%2C%22rweb_video_timestamps_enabled%22%3Atrue%2C%22longform_notetweets_rich_text_read_enabled%22%3Atrue%2C%22longform_notetweets_inline_media_enabled%22%3Atrue%2C%22responsive_web_enhance_cards_enabled%22%3Afalse%7D&fieldToggles=%7B%22withArticlePlainText%22%3Afalse%7D
+#参数Cookie、X-Csrf-Token
+#3、分页获取所有数据
+#https://x.com/i/api/graphql/V7H0Ap3_Hh2FyS75OCDO3Q/UserTweets?variables=%7B%22userId%22%3A%221058197676213231618%22%2C%22count%22%3A20%2C%22cursor%22%3A%22DAABCgABGRyPon9__8YKAAIY-idlbJuADAgAAwAAAAIAAA%22%2C%22includePromotedContent%22%3Atrue%2C%22withQuickPromoteEligibilityTweetFields%22%3Atrue%2C%22withVoice%22%3Atrue%2C%22withV2Timeline%22%3Atrue%7D&features=%7B%22rweb_tipjar_consumption_enabled%22%3Atrue%2C%22responsive_web_graphql_exclude_directive_enabled%22%3Atrue%2C%22verified_phone_label_enabled%22%3Afalse%2C%22creator_subscriptions_tweet_preview_api_enabled%22%3Atrue%2C%22responsive_web_graphql_timeline_navigation_enabled%22%3Atrue%2C%22responsive_web_graphql_skip_user_profile_image_extensions_enabled%22%3Afalse%2C%22communities_web_enable_tweet_community_results_fetch%22%3Atrue%2C%22c9s_tweet_anatomy_moderator_badge_enabled%22%3Atrue%2C%22articles_preview_enabled%22%3Atrue%2C%22tweetypie_unmention_optimization_enabled%22%3Atrue%2C%22responsive_web_edit_tweet_api_enabled%22%3Atrue%2C%22graphql_is_translatable_rweb_tweet_is_translatable_enabled%22%3Atrue%2C%22view_counts_everywhere_api_enabled%22%3Atrue%2C%22longform_notetweets_consumption_enabled%22%3Atrue%2C%22responsive_web_twitter_article_tweet_consumption_enabled%22%3Atrue%2C%22tweet_awards_web_tipping_enabled%22%3Afalse%2C%22creator_subscriptions_quote_tweet_preview_enabled%22%3Afalse%2C%22freedom_of_speech_not_reach_fetch_enabled%22%3Atrue%2C%22standardized_nudges_misinfo%22%3Atrue%2C%22tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled%22%3Atrue%2C%22rweb_video_timestamps_enabled%22%3Atrue%2C%22longform_notetweets_rich_text_read_enabled%22%3Atrue%2C%22longform_notetweets_inline_media_enabled%22%3Atrue%2C%22responsive_web_enhance_cards_enabled%22%3Afalse%7D&fieldToggles=%7B%22withArticlePlainText%22%3Afalse%7D
+#参数Cookie、X-Csrf-Token 多cursor参数
+#结构：data-user-result-timeline_v2-timeline-instructions[2]-entries-content-itemes下 (首页请求)
+#itemes-itemContent-tweet_results-result-legacy-entities-media-media_url_https：帖子图片
+#itemes-itemContent-tweet_results-result-legacy-entities-media-url：帖子详细地址
+#itemes-itemContent-tweet_results-result-legacy-full_text：帖子内容
+#itemes-itemContent-tweet_results-result-legacy-created_at:帖子时间（需要减掉16小时为中国时间）
+#结构：data-user-result-timeline_v2-timeline-instructions[1]-entries (分页请求)
+#content-itemContent-tweet_results-result-legacy-entities-media-media_url_https：帖子图片
+#content-itemContent-tweet_results-result-legacy-entities-media-url：帖子详细地址
+#content-itemContent-tweet_results-result-legacy-full_text：帖子内容
+#content-itemContent-tweet_results-result-legacy-created_at:帖子时间（需要减掉16小时为中国时间）
+# 代理服务器(格式为：IP:端口)
+proxy = {
     'http': '127.0.0.1:33210',
-    'https': '127.0.0.1:33210'
+    'https': '127.0.0.1:33210',
 }
-# 使用tweepy进行身份验证
-auth = tweepy.OAuth1UserHandler(api_key, api_secret_key, access_token, access_token_secret)
+headers = {
+    'Authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
+    'X-Guest-Token':'1809406837885923589'
+}
+# 使用代理发送请求
+response = requests.get('https://api.x.com/graphql/V7H0Ap3_Hh2FyS75OCDO3Q/UserTweets?variables=%7B%22userId%22%3A%221519761478106382337%22%2C%22count%22%3A20%2C%22includePromotedContent%22%3Atrue%2C%22withQuickPromoteEligibilityTweetFields%22%3Atrue%2C%22withVoice%22%3Atrue%2C%22withV2Timeline%22%3Atrue%7D&features=%7B%22rweb_tipjar_consumption_enabled%22%3Atrue%2C%22responsive_web_graphql_exclude_directive_enabled%22%3Atrue%2C%22verified_phone_label_enabled%22%3Afalse%2C%22creator_subscriptions_tweet_preview_api_enabled%22%3Atrue%2C%22responsive_web_graphql_timeline_navigation_enabled%22%3Atrue%2C%22responsive_web_graphql_skip_user_profile_image_extensions_enabled%22%3Afalse%2C%22communities_web_enable_tweet_community_results_fetch%22%3Atrue%2C%22c9s_tweet_anatomy_moderator_badge_enabled%22%3Atrue%2C%22articles_preview_enabled%22%3Atrue%2C%22tweetypie_unmention_optimization_enabled%22%3Atrue%2C%22responsive_web_edit_tweet_api_enabled%22%3Atrue%2C%22graphql_is_translatable_rweb_tweet_is_translatable_enabled%22%3Atrue%2C%22view_counts_everywhere_api_enabled%22%3Atrue%2C%22longform_notetweets_consumption_enabled%22%3Atrue%2C%22responsive_web_twitter_article_tweet_consumption_enabled%22%3Atrue%2C%22tweet_awards_web_tipping_enabled%22%3Afalse%2C%22creator_subscriptions_quote_tweet_preview_enabled%22%3Afalse%2C%22freedom_of_speech_not_reach_fetch_enabled%22%3Atrue%2C%22standardized_nudges_misinfo%22%3Atrue%2C%22tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled%22%3Atrue%2C%22rweb_video_timestamps_enabled%22%3Atrue%2C%22longform_notetweets_rich_text_read_enabled%22%3Atrue%2C%22longform_notetweets_inline_media_enabled%22%3Atrue%2C%22responsive_web_enhance_cards_enabled%22%3Afalse%7D&fieldToggles=%7B%22withArticlePlainText%22%3Afalse%7D', proxies=proxy,headers=headers)
 
-api = tweepy.API(auth, proxy=proxies)
-
-
-# 发送 API 请求
-user = api.me()
-
-# 输出用户信息，如果能成功输出用户信息，则验证成功
-print(user.screen_name)
-# 指定要抓取的Twitter用户名
-username = 'paul9886'
-
-public_tweets=api.home_timeline()
-# 获取用户的帖子
-tweets = api.user_timeline(screen_name=username, count=10, tweet_mode='extended')
-
-# 打印每条帖子的内容
-for tweet in tweets:
-    print(f"{tweet.user.screen_name} said: {tweet.full_text}\n")
-
-# 注意：count参数指定要获取的帖子数量，最大为200
+print(response.text)

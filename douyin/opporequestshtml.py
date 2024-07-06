@@ -1,3 +1,4 @@
+#抓取游戏名称和地址信息
 import requests
 from bs4 import BeautifulSoup
 import re
