@@ -135,7 +135,7 @@ for src in all_srcs:
         print(f"Failed to download {src}: {e}")
 
 #封装数据插入到数据库
-data_to_insert =data_to_insert = [(uuid.uuid4(),first, last, email, 1,datetime.now(),filepath,context) for first, last, email,filepath ,context in zip(all_alts, all_hrefs, all_srcs,all_filepaths,all_context)]
+data_to_insert = [(uuid.uuid4(),first, last, email, 1,datetime.now(),filepath,context) for first, last, email,filepath ,context in zip(all_alts, all_hrefs, all_srcs,all_filepaths,all_context)]
 db = con.SQLServerDB()
 db.insert_data('p_zhixingfuye', ['id','title', 'src', 'img','status','createtime','filepath','context'], data_to_insert)
 print("All Hrefs:", all_hrefs)

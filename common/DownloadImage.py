@@ -32,3 +32,17 @@ def download_image(img_url, save_path):
     else:
         print('请求失败，状态码为', response.status_code)
     response.close()
+def download_image_proxies(img_url, save_path,proxies):
+
+    # 确保目录存在，如果不存在则创建
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    response = requests.get(img_url,proxies=proxies)
+    if response.status_code == 200:
+        with open(save_path, 'wb') as f:
+            f.write(response.content)
+        f.close()
+
+        print('图片已保存到', save_path)
+    else:
+        print('请求失败，状态码为', response.status_code)
+    response.close()

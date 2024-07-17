@@ -5,33 +5,48 @@ from bs4 import BeautifulSoup
 import os
 import json
 import re
+from datetime import datetime
+import uuid
+import ConSQL.ConSQL as con
+import common.CommonMethods as math
 import douyin.opporequestshtml as a
 class Game:
-    def __init__(self, title, src, href, game_intro):
+    def __init__(self, title,gameName,gameNameCh, href,imgsrc,videosrc , gameintroduce,status,createtime,imgFilePath,videoFilePath):
         self.title = title
-        self.src = src
-        self.href = href
-        self.game_intro = game_intro
-
+        self.gameName = str(gameName),
+        self.gameNameCh = str(gameNameCh),
+        self.href = href,
+        self.imgsrc = imgsrc
+        self.videosrc = videosrc
+        self.gameintroduce = gameintroduce
+        self.status = status
+        self.createtime = createtime
+        self.imgFilePath = imgFilePath
+        self.videoFilePath = videoFilePath
     def __str__(self):
-        return f"标题: {self.title}\n图片地址: {self.src}\n详细地址: {self.href}\n游戏介绍: {self.game_intro}\n"
+        return f"标题: {self.title}\n图片地址: {self.imgsrc}\n详细地址: {self.href}\n游戏介绍: {self.gameintroduce}\n"
 
     def to_dict(self):
         return {
             'title': self.title,
-            'src': self.src,
+            'gameName': self.gameName,
+            'gameNameCh': self.gameNameCh,
             'href': self.href,
-            'game_intro': self.game_intro
+            'imgsrc': self.imgsrc,
+            'videosrc': self.videosrc,
+            'gameintroduce': self.gameintroduce,
+            'status': self.status,
+            'createtime': self.createtime,
+            'imgFilePath': self.imgFilePath,
+            'videoFilePath': self.videoFilePath
         }
-pathImg="D:/JAVA/UploadFile/xbgame/Images/"
-pathVideo="D:/JAVA/UploadFile/xbgame/Videos/"
 def requests_gamepostlist(page):
     # 定义不允许出现的字符（这里以<>:"/\|?*为例）
     header_param = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Cookie': 'darkStyle=1; Hm_lvt_36ae7161b950fe10c9fec864cb79c1d2=1720252327; HMACCOUNT=55200CFBE8ACFE7D; gg_info=1720252329; Hm_lpvt_36ae7161b950fe10c9fec864cb79c1d2=1720253191'
+        'Cookie': 'darkStyle=1; gg_info=1720663227'
     }
-    response = requests.get('https://www.xbgame.net/pcgame/pcgame-1/page/'+str(page), headers=header_param)  # 发送HTTP GET请求
+    response = requests.get('https://www.xbgame.net/pcgame/pcgame-1/page/'+str(page), proxies=proxies)  # 发送HTTP GET请求
     soup = BeautifulSoup(response.text, 'html.parser')  # 解析HTML文档
 
     # hrefs = []   #详细地址数组
@@ -43,26 +58,48 @@ def requests_gamepostlist(page):
     games = []
     # 找到所有 class="post-list-item item-post-style-1" 的元素
     boxes = soup.find_all(class_="post-list-item item-post-style-1")
+    count = 1  # 计数器初始化
     for box in boxes:
+        # if count <0:
+        #     count += 1
+        #     continue  # 当计数器等于3时跳出循环
+        pattern = r'item-(\d+)'
+        match = re.search(pattern, str(box))
+        filename=match.group(1)
+        if filename=="":
+            continue
         img_tag=box.find("img", class_="post-thumb" , alt=True, src=True)
         a_tag=box.find("a", class_="thumb-link", href=True)
-        match = re.search(r'apps/(\d+)/', img_tag['src'].split('?')[0])
-        filename=""
-        if match:
-            filename = match.group(1)  # 获取匹配到的数字部分
+        # match = re.search(r'apps/(\d+)/', img_tag['src'].split('?')[0])
+        # filename=""
+        # if match:
+        #     filename = match.group(1)  # 获取匹配到的数字部分
+        math.generate_random(3)
         gameintroduce,videourl=get_game_introduce(a_tag['href'].split('?')[0])
-        game = Game(img_tag['alt'], img_tag['src'].split('?')[0], a_tag['href'].split('?')[0], gameintroduce)
+        math.generate_random(2)
         #下载图片到指定目录
-        downimg.download_image(img_tag['src'].split('?')[0],pathImg+filename+'.jpg')
-
+        if os.path.isfile(pathImg+filename+'.jpg'):
+            downimg.download_image_proxies(img_tag['src'].split('?')[0],pathImg+filename+'.jpg',proxies)
         match = re.search(r'apps/(\d+)/', img_tag['src'].split('?')[0])
         videofilename=""
         if match:
             videofilename = match.group(1)  # 获取匹配到的数字部分
+        #获取中英文名字
+        gameNameCh,gameName = extract_names(img_tag['alt'])
         #下载视频到指定目录
-        downimg.download_image(videourl,pathVideo+videofilename+'.mp4')
+        if os.path.isfile(pathVideo+filename+'.mp4'):
+            downimg.download_image_proxies(videourl,pathVideo+filename+'.mp4',proxies)
+        math.generate_random(4)
+        game = Game(img_tag['alt'],str(gameName),str(gameNameCh), a_tag['href'].split('?')[0], img_tag['src'].split('?')[0], videourl,gameintroduce,1,datetime.now(),pathImg+filename+'.jpg',pathVideo+videofilename+'.mp4')
         games.append(game)
-
+        count += 1  # 每次循环计数器加1
+        # if count == 3:
+        #     break  # 当计数器等于3时跳出循环
+    #将抓取的数据存储到数据库
+    data_to_insert  = [(uuid.uuid4(),game.title,str(game.gameName[0]),str(game.gameNameCh[0]),str(game.href[0]),str(game.imgsrc),str(game.videosrc),game.gameintroduce,game.status,game.createtime,game.imgFilePath,game.videoFilePath) for game in games]
+    db = con.SQLServerDB()
+    db.insert_data('p_xbgame', ['id','title','gameName','gameNameCh', 'herf', 'imgsrc', 'videosrc', 'gameintroduce','status','createtime','imgFilePath','videoFilePath'], data_to_insert)
+    print("执行数据成功")
 #获取游戏介绍文本
 def get_game_introduce(url):
     # 定义不允许出现的字符（这里以<>:"/\|?*为例）
@@ -70,7 +107,7 @@ def get_game_introduce(url):
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
         'Cookie': 'darkStyle=1; Hm_lvt_36ae7161b950fe10c9fec864cb79c1d2=1720252327; HMACCOUNT=55200CFBE8ACFE7D; gg_info=1720252329; Hm_lpvt_36ae7161b950fe10c9fec864cb79c1d2=1720253191'
     }
-    response = requests.get(url, headers=header_param)  # 发送HTTP GET请求
+    response = requests.get(url, headers=header_param, proxies=proxies)  # 发送HTTP GET请求
     soup = BeautifulSoup(response.text, 'html.parser')  # 解析HTML文档
     text_content=''
     videourl=''
@@ -100,9 +137,40 @@ def get_game_introduce(url):
     else:
         print("没有找到 class='entry-content' 的元素")
     return  text_content,videourl
+pathImg="D:/JAVA/UploadFile/xbgame/Images/"
+pathVideo="D:/JAVA/UploadFile/xbgame/Videos/"
+# 设置代理
+proxies = {
+    'http': '127.0.0.1:7890',
+    'https': '127.0.0.1:7890',
+}
+#根据标题提取中英文名字
+def extract_names(original_string):
+    # 寻找书名号的位置
+    start_index = original_string.find("《")
+    end_index = original_string.find("》")
+
+    # 提取书名号中的内容
+    if start_index != -1 and end_index != -1:
+        content = original_string[start_index + 1:end_index]
+    else:
+        return "", ""
+
+    # 根据 '/' 分割字符串
+    parts = content.split('/')
+
+    # 提取 name1 和 name2
+    if len(parts) >= 2:
+        name1 = parts[0].strip()  # 去除首尾空格
+        name2 = parts[1].strip()  # 去除首尾空格
+    else:
+        name1 = ""
+        name2 = ""
+
+    return name1, name2
 
 #调用Main方法
-requests_gamepostlist(1)
+requests_gamepostlist(2)
 #get_game_introduce('https://www.xbgame.net/197441.html')
 #contes,videoud=get_game_introduce('https://www.xbgame.net/197441.html')
 #downimg.download_image(videoud,pathVideo+os.path.basename(videoud).split('.')[0]+'.mp4')
