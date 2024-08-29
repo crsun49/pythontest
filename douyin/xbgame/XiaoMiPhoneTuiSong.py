@@ -3,20 +3,22 @@ import time
 import uiautomator2 as u2
 import douyin.opporequestshtml as a
 import  douyin.ImageConversion as imgCon
+import ConSQL.ConSQL as con
+import ffmpeg
 import douyin.gameclick as game
 import os
-def pushFiles(d,fileName,pathname):
+def pushFiles(d,fileName,imgFilePath,videoFilePath):
     # # 电脑上源文件路径和手机上目标路径 C:\Users\Administrator\Desktop\33 C:/Users/ODC/Desktop/33/
 
-    source_file_path_img = "C:/Users/"+pathname+"/Desktop/33/"+fileName+".jpg"
-    source_file_path_video = "C:/Users/"+pathname+"/Desktop/33/"+fileName+".MP4"
+    #source_file_path_img = "D:/JAVA/UploadFile/xbgame/Images/"+fileName+".jpg"
+    #source_file_path_video = "C:/Users/"+pathname+"/Desktop/33/"+fileName+".MP4"
     target_directory_video = "/sdcard/1/"
     target_directory_img = "/sdcard/DCIM/Camera/"
     #推送图片
-    source_directory = "C:/Users/Administrator/Desktop/33"
-    d.push(source_file_path_img, target_directory_img)
+    #source_directory = "C:/Users/Administrator/Desktop/33"
+    d.push(imgFilePath, target_directory_img)
     #推送视频
-    d.push(source_file_path_video, target_directory_video)
+    d.push(videoFilePath, target_directory_video)
     # 获取目录中的所有 JPG 文件
     # jpg_files = [file for file in os.listdir(source_directory) if file.lower().endswith(".jpg")]
     # # 遍历 JPG 文件并推送到手机上
@@ -30,22 +32,22 @@ def pushFiles(d,fileName,pathname):
     print("文件推送成功")
 def delFiles(d,i):
     d.shell(f"rm /sdcard/1/"+str(i-3)+".mp4")
-def faDouYin(url,i,pathname,zwtitle):
+def faDouYin(d,game,i):
     #下载图片和视频到电脑
     #title = a.main("https://byrut.org/4455-left-4-dead-2.html", '0')
-    title = a.main(url, str(i))
-    if title=='-1' or title=='':
+    #title = a.main(url, str(i))
+    if game.title=='-1' or game.title=='':
         print('图片抓取失败')
         return '1'
     #title="Left4De ad2"
     time.sleep(2)
     #将低分辨率的图片转换成高分辨率
-    imgCon.imgConversion("C:/Users/"+pathname+"/Desktop/33/"+str(i)+".jpg", "C:/Users/"+pathname+"/Desktop/33/"+str(i)+".jpg")
+    #imgCon.imgConversion(game.imgFilePath, game.imgFilePath)
     time.sleep(2)
-    d = u2.connect_usb('v8eqhujjwwknkjyt')
+    #d = u2.connect_usb('v8eqhujjwwknkjyt')
     print(d.info)
     #推送文件到手机
-    pushFiles(d, str(i) ,pathname)
+    pushFiles(d, str(i) ,game.imgFilePath,game.videoFilePath)
     time.sleep(3)
     # 执行adb shell命令来打开指定目录
     #关闭抖音和文件管理
@@ -91,7 +93,7 @@ def faDouYin(url,i,pathname,zwtitle):
     time.sleep(2)
     try:
         d.set_fastinput_ime(True)
-        d.send_keys("#"+zwtitle.replace(" ","")+" #"+title.replace(" ",""))
+        d.send_keys(game.title.replace(" ","")+" "+"#"+game.gameNameCh.replace(" ","")+"#"+game.gameName.replace(" ",""))
         d.set_fastinput_ime(False)
     except Exception as e:
         print(f"发生请求异常：{str(e)}")
@@ -239,10 +241,23 @@ def faDouYin(url,i,pathname,zwtitle):
 #             i=i+1
 #         ics=ics+1
 # print('全部执行完成')
-
-d = u2.connect_usb('v8eqhujjwwknkjyt')
-d.app_stop("com.android.fileexplorer")
-d.app_stop('com.ss.android.ugc.aweme')
-
+def Main():
+    db = con.SQLServerDB()
+    query = "select top 10 * from dbo.p_xbgame where status= ?"
+    params = (1,)
+    d = u2.connect_usb('v8eqhujjwwknkjyt')
+    xbgames=db.fetch_data(query, params)
+    i=0
+    for game in xbgames:
+        faDouYin(d,game,i)
+        i=i+1
+        return
+Main()
+#ffmpeg.input('D:/JAVA/UploadFile/xbgame/Videos/2551.webm').output('D:/JAVA/UploadFile/xbgame/Videos/2551.mp4').run()
+#d = u2.connect_usb('v8eqhujjwwknkjyt')
+#d.app_stop("com.android.fileexplorer")
+#d.app_stop('com.ss.android.ugc.aweme')
+#d.app_stop("com.taobao.idlefish")
+#d.app_start("com.taobao.idlefish")
 
 
