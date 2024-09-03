@@ -7,7 +7,7 @@ import ConSQL.ConSQL as con
 import ffmpeg
 import douyin.gameclick as game
 import os
-def pushFiles(d,fileName,imgFilePath,videoFilePath):
+def pushFiles(d,Num,fileName,imgFilePath,videoFilePath):
     # # 电脑上源文件路径和手机上目标路径 C:\Users\Administrator\Desktop\33 C:/Users/ODC/Desktop/33/
 
     #source_file_path_img = "D:/JAVA/UploadFile/xbgame/Images/"+fileName+".jpg"
@@ -19,6 +19,14 @@ def pushFiles(d,fileName,imgFilePath,videoFilePath):
     d.push(imgFilePath, target_directory_img)
     #推送视频
     d.push(videoFilePath, target_directory_video)
+    time.sleep(2)
+    old_img_file_path = f"{target_directory_img}{fileName}.jpg"
+    new_img_file_path = f"{target_directory_img}{str(Num)}.jpg"
+
+    #d.shell(f"mv {old_img_file_path} {new_img_file_path}")
+    old_video_file_path = f"{target_directory_video}{fileName}.MP4"
+    new_video_file_path = f"{target_directory_video}{str(Num)}.MP4"
+    d.shell(f"mv {old_video_file_path} {new_video_file_path}")
     # 获取目录中的所有 JPG 文件
     # jpg_files = [file for file in os.listdir(source_directory) if file.lower().endswith(".jpg")]
     # # 遍历 JPG 文件并推送到手机上
@@ -42,12 +50,15 @@ def faDouYin(d,game,i):
     #title="Left4De ad2"
     time.sleep(2)
     #将低分辨率的图片转换成高分辨率
-    #imgCon.imgConversion(game.imgFilePath, game.imgFilePath)
+    imgCon.imgConversion(game.imgFilePath, game.imgFilePath)
     time.sleep(2)
     #d = u2.connect_usb('v8eqhujjwwknkjyt')
     print(d.info)
+    #判断MP4文件是否存在不存在则转换
+    if not os.path.isfile(game.videoFilePath):
+        ffmpeg.input(pathImg+game.filename+'.webm').output(game.videoFilePath).run()
     #推送文件到手机
-    pushFiles(d, str(i) ,game.imgFilePath,game.videoFilePath)
+    pushFiles(d, str(i) ,game.filename,game.imgFilePath,game.videoFilePath)
     time.sleep(3)
     # 执行adb shell命令来打开指定目录
     #关闭抖音和文件管理
@@ -77,7 +88,8 @@ def faDouYin(d,game,i):
     d.xpath('//*[@content-desc="发送"]/android.widget.ImageView[1]').click()
     time.sleep(2)
     #点击抖音按钮
-    d.click(0.159, 0.655)
+    #d.click(0.159, 0.655)
+    d.click(0.129, 0.893)
     time.sleep(2)
     ixh=0
     while True:
@@ -92,8 +104,10 @@ def faDouYin(d,game,i):
     d(text='下一步').click()
     time.sleep(2)
     try:
+        #点击文本框
         d.set_fastinput_ime(True)
-        d.send_keys(game.title.replace(" ","")+" "+"#"+game.gameNameCh.replace(" ","")+"#"+game.gameName.replace(" ",""))
+        d.click(0.184, 0.123)
+        d.send_keys(("" if game.gameNameCh.replace(" ","") in game.gameintroduce.replace(" ","") else game.gameNameChstr.replace(" ",""))+game.gameintroduce.replace(" ","")+" "+" #"+game.gameNameCh.replace(" ","")+" #"+game.gameName.replace(" ",""))
         d.set_fastinput_ime(False)
     except Exception as e:
         print(f"发生请求异常：{str(e)}")
@@ -129,7 +143,7 @@ def faDouYin(d,game,i):
     # d.click(0.169, 0.171)
     time.sleep(1)
     #点击选择封面
-    d.click(0.866, 0.238)
+    d.click(0.776, 0.211)
     time.sleep(3)
     #切换竖版
     d.click(0.791, 0.583)
@@ -205,7 +219,7 @@ def faDouYin(d,game,i):
         else:
             print('循环第跳出')
             break  # 当条件满足时跳出循环
-
+    return 'true'
 
     #点击全部车型
     # 输出文件内容
@@ -241,17 +255,28 @@ def faDouYin(d,game,i):
 #             i=i+1
 #         ics=ics+1
 # print('全部执行完成')
+pathImg="D:/JAVA/UploadFile/xbgame/Images/"
 def Main():
     db = con.SQLServerDB()
-    query = "select top 10 * from dbo.p_xbgame where status= ?"
-    params = (1,)
+    query = "select top 10 * from dbo.p_xbgame where status= ? AND isTs=?"
+    params = (1,0)
     d = u2.connect_usb('v8eqhujjwwknkjyt')
     xbgames=db.fetch_data(query, params)
     i=0
     for game in xbgames:
-        faDouYin(d,game,i)
+        #pushFiles(d,i,game.filename,game.imgFilePath,game.videoFilePath)
+        rtn=faDouYin(d,game,i)
+        #rtn= "true"
+        if rtn == "true":
+            print('发布成功'+str(game.gameNameCh))
+            update_dict = {'isTs': 1}
+            # 条件设置为 id = ?
+            condition = 'id = ?'
+            # 实际参数值，这里假设你要更新 id 为 123 的记录
+            params = [game.id]
+            # 执行更新操作
+            db.update_data('p_xbgame', update_dict, condition, params)
         i=i+1
-        return
 Main()
 #ffmpeg.input('D:/JAVA/UploadFile/xbgame/Videos/2551.webm').output('D:/JAVA/UploadFile/xbgame/Videos/2551.mp4').run()
 #d = u2.connect_usb('v8eqhujjwwknkjyt')

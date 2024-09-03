@@ -10,16 +10,19 @@ import uuid
 import ConSQL.ConSQL as con
 import common.CommonMethods as math
 import douyin.opporequestshtml as a
+import ffmpeg
 class Game:
-    def __init__(self, title,gameName,gameNameCh, href,imgsrc,videosrc , gameintroduce,status,createtime,imgFilePath,videoFilePath):
+    def __init__(self, title,gameName,gameNameCh, href,imgsrc,videosrc , gameintroduce,status,createtime,imgFilePath,videoFilePath,filename,isTs):
         self.title = title
-        self.gameName = str(gameName),
-        self.gameNameCh = str(gameNameCh),
-        self.href = href,
-        self.imgsrc = imgsrc
+        self.gameName = gameName
+        self.gameNameCh = gameNameCh
+        self.href = str(href)
+        self.filename = filename
+        self.imgsrc = str(imgsrc)
         self.videosrc = videosrc
-        self.gameintroduce = gameintroduce
+        self.gameintroduce =gameintroduce
         self.status = status
+        self.isTs = isTs
         self.createtime = createtime
         self.imgFilePath = imgFilePath
         self.videoFilePath = videoFilePath
@@ -31,11 +34,13 @@ class Game:
             'title': self.title,
             'gameName': self.gameName,
             'gameNameCh': self.gameNameCh,
+            'filename': self.filename,
             'href': self.href,
-            'imgsrc': self.imgsrc,
+            'imgsrc': str(self.imgsrc),
             'videosrc': self.videosrc,
             'gameintroduce': self.gameintroduce,
             'status': self.status,
+            'isTs': self.isTs,
             'createtime': self.createtime,
             'imgFilePath': self.imgFilePath,
             'videoFilePath': self.videoFilePath
@@ -74,11 +79,11 @@ def requests_gamepostlist(page):
         # filename=""
         # if match:
         #     filename = match.group(1)  # 获取匹配到的数字部分
-        math.generate_random(3)
+        math.generate_random_number(1,5,2)
         gameintroduce,videourl=get_game_introduce(a_tag['href'].split('?')[0])
-        math.generate_random(2)
+        math.generate_random_number(1,5,2)
         #下载图片到指定目录
-        if os.path.isfile(pathImg+filename+'.jpg'):
+        if not os.path.isfile(pathImg+filename+'.jpg'):
             downimg.download_image_proxies(img_tag['src'].split('?')[0],pathImg+filename+'.jpg',proxies)
         match = re.search(r'apps/(\d+)/', img_tag['src'].split('?')[0])
         videofilename=""
@@ -87,19 +92,67 @@ def requests_gamepostlist(page):
         #获取中英文名字
         gameNameCh,gameName = extract_names(img_tag['alt'])
         #下载视频到指定目录
-        if os.path.isfile(pathVideo+filename+'.mp4'):
-            downimg.download_image_proxies(videourl,pathVideo+filename+'.mp4',proxies)
-        math.generate_random(4)
-        game = Game(img_tag['alt'],str(gameName),str(gameNameCh), a_tag['href'].split('?')[0], img_tag['src'].split('?')[0], videourl,gameintroduce,1,datetime.now(),pathImg+filename+'.jpg',pathVideo+videofilename+'.mp4')
+        if not os.path.isfile(pathVideo+filename+'.mp4'):
+            downimg.download_image_proxies(videourl,pathVideo+filename+'.webm',proxies)
+            #将webm格式转换mp4
+            ffmpeg.input(pathVideo+filename+'.webm').output(pathVideo+filename+'.mp4').run()
+        math.generate_random_number(1,5,2)
+        #return
+        game = Game(img_tag['alt'],gameName,gameNameCh, a_tag['href'].split('?')[0], img_tag['src'].split('?')[0], videourl,gameintroduce,1,datetime.now(),pathImg+filename+'.jpg',pathVideo+filename+'.mp4',filename,0)
         games.append(game)
         count += 1  # 每次循环计数器加1
-        # if count == 3:
-        #     break  # 当计数器等于3时跳出循环
+        if count == 15:
+           break
     #将抓取的数据存储到数据库
-    data_to_insert  = [(uuid.uuid4(),game.title,str(game.gameName[0]),str(game.gameNameCh[0]),str(game.href[0]),str(game.imgsrc),str(game.videosrc),game.gameintroduce,game.status,game.createtime,game.imgFilePath,game.videoFilePath) for game in games]
+    # data_to_insert  = [(uuid.uuid4(),game.title,game.gameName,game.gameNameCh,game.href,game.imgsrc,game.videosrc,game.gameintroduce,game.status,game.createtime,game.imgFilePath,game.videoFilePath,game.filename,0) for game in games]
+    # db = con.SQLServerDB()
+    # db.insert_data('p_xbgame', ['id','title','gameName','gameNameCh', 'herf', 'imgsrc', 'videosrc', 'gameintroduce','status','createtime','imgFilePath','videoFilePath','filename','isTs'], data_to_insert)
+    # print("执行数据成功")
+    # 创建一个集合来存储已存在的 videoFilePath
+    existing_video_file_paths = []
     db = con.SQLServerDB()
-    db.insert_data('p_xbgame', ['id','title','gameName','gameNameCh', 'herf', 'imgsrc', 'videosrc', 'gameintroduce','status','createtime','imgFilePath','videoFilePath'], data_to_insert)
-    print("执行数据成功")
+    # 查询数据库，检查哪些 videoFilePath 已经存在
+    query = "SELECT videoFilePath FROM dbo.p_xbgame WHERE videoFilePath IN ({})".format(
+        ','.join(['?' for _ in range(len(games))])
+    )
+    video_file_paths_to_check = [game.videoFilePath for game in games]
+    existing_video_file_paths_result = db.fetch_data(query, video_file_paths_to_check)
+
+    for row in existing_video_file_paths_result:
+        existing_video_file_paths.append(row[0])
+
+    # 准备要插入的数据
+    data_to_insert = [
+        (
+            uuid.uuid4(),
+            game.title,
+            game.gameName,
+            game.gameNameCh,
+            game.href,
+            game.imgsrc,
+            game.videosrc,
+            game.gameintroduce,
+            game.status,
+            game.createtime,
+            game.imgFilePath,
+            game.videoFilePath,
+            game.filename,
+            0
+        )
+        for game in games
+        if game.videoFilePath not in existing_video_file_paths
+    ]
+
+    # 执行插入操作
+    if data_to_insert:
+        db.insert_data(
+            'p_xbgame',
+            ['id', 'title', 'gameName', 'gameNameCh', 'href', 'imgsrc', 'videosrc', 'gameintroduce', 'status', 'createtime', 'imgFilePath', 'videoFilePath', 'filename', 'isTs'],
+            data_to_insert
+        )
+        print("数据插入成功")
+    else:
+        print("没有需要插入的数据")
 #获取游戏介绍文本
 def get_game_introduce(url):
     # 定义不允许出现的字符（这里以<>:"/\|?*为例）
