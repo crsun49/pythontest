@@ -5,8 +5,23 @@ import douyin.opporequestshtml as a
 import  douyin.ImageConversion as imgCon
 import ConSQL.ConSQL as con
 import ffmpeg
+import common.DownloadImage as downimg
 import douyin.gameclick as game
 import os
+def pushFilesVideo(d,Num,fileName,videoFilePath):
+    # # 电脑上源文件路径和手机上目标路径 C:\Users\Administrator\Desktop\33 C:/Users/ODC/Desktop/33/
+
+    target_directory_video = "/sdcard/1/"
+    target_directory_img = "/sdcard/DCIM/Camera/"
+    #推送视频
+    d.push(videoFilePath, target_directory_video)
+    time.sleep(2)
+    old_video_file_path = f"{target_directory_video}{fileName}.MP4"
+    new_video_file_path = f"{target_directory_video}{str(Num)}.MP4"
+    d.shell(f"mv {old_video_file_path} {new_video_file_path}")
+    #推送成功后刷新相册列表
+    d.shell("am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/DCIM/Camera/")
+    print("文件推送成功")
 def pushFiles(d,Num,fileName,imgFilePath,videoFilePath):
     # # 电脑上源文件路径和手机上目标路径 C:\Users\Administrator\Desktop\33 C:/Users/ODC/Desktop/33/
 
@@ -38,6 +53,11 @@ def pushFiles(d,Num,fileName,imgFilePath,videoFilePath):
     #推送成功后刷新相册列表
     d.shell("am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/DCIM/Camera/")
     print("文件推送成功")
+# 设置代理
+proxies = {
+    'http': '127.0.0.1:7890',
+    'https': '127.0.0.1:7890',
+}
 def delFiles(d,i):
     d.shell(f"rm /sdcard/1/"+str(i-3)+".mp4")
 def faDouYin(d,game,i):
@@ -49,8 +69,15 @@ def faDouYin(d,game,i):
         return '1'
     #title="Left4De ad2"
     time.sleep(2)
-    #将低分辨率的图片转换成高分辨率
-    imgCon.imgConversion(game.imgFilePath, game.imgFilePath)
+    if  os.path.isfile(game.imgFilePath):
+        #将低分辨率的图片转换成高分辨率
+        imgCon.imgConversion(game.imgFilePath, game.imgFilePath)
+    else:
+        #补充下载图片到指定位置
+        downimg.download_image_proxies(game.imgsrc,pathImg+game.filename+'.jpg',proxies)
+        time.sleep(2)
+        imgCon.imgConversion(game.imgFilePath, game.imgFilePath)
+        #pushFilesVideo(d, str(i) ,game.filename,game.videoFilePath)
     time.sleep(2)
     #d = u2.connect_usb('v8eqhujjwwknkjyt')
     print(d.info)
@@ -107,7 +134,7 @@ def faDouYin(d,game,i):
         #点击文本框
         d.set_fastinput_ime(True)
         d.click(0.184, 0.123)
-        d.send_keys(("" if game.gameNameCh.replace(" ","") in game.gameintroduce.replace(" ","") else game.gameNameChstr.replace(" ",""))+game.gameintroduce.replace(" ","")+" "+" #"+game.gameNameCh.replace(" ","")+" #"+game.gameName.replace(" ",""))
+        d.send_keys(("" if game.gameNameCh.replace(" ","") in game.gameintroduce.replace(" ","") else game.gameNameChstr.replace(" ",""))+game.gameintroduce.replace(" ","")+" "+" #"+game.gameNameCh.replace(" ","")+" #steam游戏 #联机游戏 #沙盒游戏 #游戏视频")
         d.set_fastinput_ime(False)
     except Exception as e:
         print(f"发生请求异常：{str(e)}")
@@ -212,7 +239,7 @@ def faDouYin(d,game,i):
     time.sleep(4)
     ixh=0
     while True:
-        if d(resourceId="com.ss.android.ugc.aweme:id/ehe").exists or ixh<60 :
+        if d(resourceId="com.ss.android.ugc.aweme:id/ehe").exists or ixh<45 :
             print('循环第'+str(ixh)+'等带发布')
             ixh=ixh+1
             time.sleep(2)
@@ -277,6 +304,8 @@ def Main():
             # 执行更新操作
             db.update_data('p_xbgame', update_dict, condition, params)
         i=i+1
+        # if i==2 :
+        #     return
 Main()
 #ffmpeg.input('D:/JAVA/UploadFile/xbgame/Videos/2551.webm').output('D:/JAVA/UploadFile/xbgame/Videos/2551.mp4').run()
 #d = u2.connect_usb('v8eqhujjwwknkjyt')

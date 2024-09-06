@@ -223,7 +223,7 @@ def extract_names(original_string):
     return name1, name2
 
 #调用Main方法
-requests_gamepostlist(2)
+requests_gamepostlist(3)
 #get_game_introduce('https://www.xbgame.net/197441.html')
 #contes,videoud=get_game_introduce('https://www.xbgame.net/197441.html')
 #downimg.download_image(videoud,pathVideo+os.path.basename(videoud).split('.')[0]+'.mp4')
