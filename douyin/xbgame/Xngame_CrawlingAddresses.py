@@ -60,7 +60,7 @@ def requests_gamepostlist(page):
     # game_ntroduce=[] #游戏介绍
 
     # 创建游戏对象列表
-    games = []
+
     # 找到所有 class="post-list-item item-post-style-1" 的元素
     boxes = soup.find_all(class_="post-list-item item-post-style-1")
     count = 1  # 计数器初始化
@@ -98,17 +98,66 @@ def requests_gamepostlist(page):
             ffmpeg.input(pathVideo+filename+'.webm').output(pathVideo+filename+'.mp4').run()
         math.generate_random_number(1,5,2)
         #return
+        games = []
         game = Game(img_tag['alt'],gameName,gameNameCh, a_tag['href'].split('?')[0], img_tag['src'].split('?')[0], videourl,gameintroduce,1,datetime.now(),pathImg+filename+'.jpg',pathVideo+filename+'.mp4',filename,0)
         games.append(game)
+        insert_game_data(games)
         count += 1  # 每次循环计数器加1
-        if count == 15:
-           break
+        print('第'+str(count))
+        if count>15 :
+            return
+
     #将抓取的数据存储到数据库
     # data_to_insert  = [(uuid.uuid4(),game.title,game.gameName,game.gameNameCh,game.href,game.imgsrc,game.videosrc,game.gameintroduce,game.status,game.createtime,game.imgFilePath,game.videoFilePath,game.filename,0) for game in games]
     # db = con.SQLServerDB()
     # db.insert_data('p_xbgame', ['id','title','gameName','gameNameCh', 'herf', 'imgsrc', 'videosrc', 'gameintroduce','status','createtime','imgFilePath','videoFilePath','filename','isTs'], data_to_insert)
     # print("执行数据成功")
     # 创建一个集合来存储已存在的 videoFilePath
+    # existing_video_file_paths = []
+    # db = con.SQLServerDB()
+    # # 查询数据库，检查哪些 videoFilePath 已经存在
+    # query = "SELECT videoFilePath FROM dbo.p_xbgame WHERE videoFilePath IN ({})".format(
+    #     ','.join(['?' for _ in range(len(games))])
+    # )
+    # video_file_paths_to_check = [game.videoFilePath for game in games]
+    # existing_video_file_paths_result = db.fetch_data(query, video_file_paths_to_check)
+    #
+    # for row in existing_video_file_paths_result:
+    #     existing_video_file_paths.append(row[0])
+    #
+    # # 准备要插入的数据
+    # data_to_insert = [
+    #     (
+    #         uuid.uuid4(),
+    #         game.title,
+    #         game.gameName,
+    #         game.gameNameCh,
+    #         game.href,
+    #         game.imgsrc,
+    #         game.videosrc,
+    #         game.gameintroduce,
+    #         game.status,
+    #         game.createtime,
+    #         game.imgFilePath,
+    #         game.videoFilePath,
+    #         game.filename,
+    #         0
+    #     )
+    #     for game in games
+    #     if game.videoFilePath not in existing_video_file_paths
+    # ]
+    #
+    # # 执行插入操作
+    # if data_to_insert:
+    #     db.insert_data(
+    #         'p_xbgame',
+    #         ['id', 'title', 'gameName', 'gameNameCh', 'href', 'imgsrc', 'videosrc', 'gameintroduce', 'status', 'createtime', 'imgFilePath', 'videoFilePath', 'filename', 'isTs'],
+    #         data_to_insert
+    #     )
+    #     print("数据插入成功")
+    # else:
+    #     print("没有需要插入的数据")
+def insert_game_data(games):
     existing_video_file_paths = []
     db = con.SQLServerDB()
     # 查询数据库，检查哪些 videoFilePath 已经存在
@@ -223,7 +272,7 @@ def extract_names(original_string):
     return name1, name2
 
 #调用Main方法
-requests_gamepostlist(3)
+requests_gamepostlist(6)
 #get_game_introduce('https://www.xbgame.net/197441.html')
 #contes,videoud=get_game_introduce('https://www.xbgame.net/197441.html')
 #downimg.download_image(videoud,pathVideo+os.path.basename(videoud).split('.')[0]+'.mp4')
