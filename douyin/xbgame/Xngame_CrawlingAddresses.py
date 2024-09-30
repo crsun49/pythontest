@@ -11,6 +11,7 @@ import ConSQL.ConSQL as con
 import common.CommonMethods as math
 import douyin.opporequestshtml as a
 import ffmpeg
+import subprocess
 class Game:
     def __init__(self, title,gameName,gameNameCh, href,imgsrc,videosrc , gameintroduce,status,createtime,imgFilePath,videoFilePath,filename,isTs):
         self.title = title
@@ -95,7 +96,8 @@ def requests_gamepostlist(page):
         if not os.path.isfile(pathVideo+filename+'.mp4'):
             downimg.download_image_proxies(videourl,pathVideo+filename+'.webm',proxies)
             #将webm格式转换mp4
-            ffmpeg.input(pathVideo+filename+'.webm').output(pathVideo+filename+'.mp4').run()
+            #ffmpeg.input(pathVideo+filename+'.webm').output(pathVideo+filename+'.mp4').run()
+            convert_webm_to_mp4(pathVideo+filename+'.webm',pathVideo+filename+'.mp4')
         math.generate_random_number(1,5,2)
         #return
         games = []
@@ -157,6 +159,17 @@ def requests_gamepostlist(page):
     #     print("数据插入成功")
     # else:
     #     print("没有需要插入的数据")
+def convert_webm_to_mp4(input_file, output_file):
+    command = [
+        'ffmpeg',
+        '-i', input_file,
+        '-c:v', 'libx264',  # 视频编码
+        '-preset', 'slow',   # 编码速度，可能根据需要选择
+        '-crf', '28',        # 质量控制
+        '-threads', '1',     # 限制线程数以减少 CPU 使用率
+        output_file
+    ]
+    subprocess.run(command)
 def insert_game_data(games):
     existing_video_file_paths = []
     db = con.SQLServerDB()
