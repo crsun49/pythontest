@@ -52,7 +52,10 @@ def requests_gamepostlist(page):
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
         'Cookie': 'darkStyle=1; gg_info=1720663227'
     }
+    #PC1游戏区
     response = requests.get('https://www.xbgame.net/pcgame/pcgame-1/page/'+str(page), proxies=proxies)  # 发送HTTP GET请求
+    #Switch游戏
+    #response = requests.get('https://www.xbgame.net/switchgame/page/'+str(page), proxies=proxies)  # 发送HTTP GET请求
     soup = BeautifulSoup(response.text, 'html.parser')  # 解析HTML文档
 
     # hrefs = []   #详细地址数组
@@ -82,6 +85,8 @@ def requests_gamepostlist(page):
         #     filename = match.group(1)  # 获取匹配到的数字部分
         math.generate_random_number(1,5,2)
         gameintroduce,videourl=get_game_introduce(a_tag['href'].split('?')[0])
+        if videourl is None:
+            continue
         math.generate_random_number(1,5,2)
         #下载图片到指定目录
         if not os.path.isfile(pathImg+filename+'.jpg'):
@@ -106,7 +111,7 @@ def requests_gamepostlist(page):
         insert_game_data(games)
         count += 1  # 每次循环计数器加1
         print('第'+str(count))
-        if count>15 :
+        if count>16 :
             return
 
     #将抓取的数据存储到数据库
@@ -241,6 +246,9 @@ def get_game_introduce(url):
 
         # 找到包含 data-video 的 div 标签
         player_div = soup.find('div', class_='b2-player')
+        if player_div is  None:
+            print("没有视频发布")
+            return None,None
         # 获取 data-video 的值
         video_data_str = player_div.get('data-video')
         # 解析 JSON 数据
@@ -285,7 +293,7 @@ def extract_names(original_string):
     return name1, name2
 
 #调用Main方法
-requests_gamepostlist(6)
+requests_gamepostlist(8)
 #get_game_introduce('https://www.xbgame.net/197441.html')
 #contes,videoud=get_game_introduce('https://www.xbgame.net/197441.html')
 #downimg.download_image(videoud,pathVideo+os.path.basename(videoud).split('.')[0]+'.mp4')

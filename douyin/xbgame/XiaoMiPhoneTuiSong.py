@@ -134,7 +134,8 @@ def faDouYin(d,game,i):
         #点击文本框
         d.set_fastinput_ime(True)
         d.click(0.184, 0.123)
-        d.send_keys(("" if game.gameNameCh.replace(" ","") in game.gameintroduce.replace(" ","") else game.gameNameChstr.replace(" ",""))+game.gameintroduce.replace(" ","")+" "+" #"+game.gameNameCh.replace(" ","")+" #steam游戏 #联机游戏 #沙盒游戏 #游戏视频")
+        d.send_keys(("" if game.gameNameCh.replace(" ","") in game.gameintroduce.replace(" ","") else game.gameNameCh.replace(" ",""))+game.gameintroduce.replace(" ","")+" "+" #"+game.gameNameCh.replace(" ","")+" #游戏推荐 #单机游戏 #游戏推荐电脑 #游戏视频")
+        #d.send_keys("343434 #steam游戏 #联机游戏 #沙盒游戏 #游戏视频")
         d.set_fastinput_ime(False)
     except Exception as e:
         print(f"发生请求异常：{str(e)}")
@@ -293,7 +294,6 @@ def Main():
     for game in xbgames:
         #pushFiles(d,i,game.filename,game.imgFilePath,game.videoFilePath)
         rtn=faDouYin(d,game,i)
-        #rtn= "true"
         if rtn == "true":
             print('发布成功'+str(game.gameNameCh))
             update_dict = {'isTs': 1}
